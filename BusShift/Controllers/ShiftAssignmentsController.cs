@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using BusShift.Data;
+using BusShift.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using BusShift.Data;
-using BusShift.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BusShift.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class ShiftAssignmentsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -173,5 +175,45 @@ namespace BusShift.Controllers
         {
             return _context.ShiftAssignments.Any(e => e.Id == id);
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportMockShifts()
+        {
+            var exampleDriver = _context.Drivers.FirstOrDefault();
+            var exampleRoute = _context.TripRoutes.FirstOrDefault();
+            var exampleVehicle = _context.Vehicles.FirstOrDefault();
+
+            if (exampleDriver == null || exampleRoute == null || exampleVehicle == null)
+            {
+                TempData["Error"] = "Driver, Route veya Vehicle eksik!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            for (int day = 1; day <= 10; day++) // İlk 10 gün için
+            {
+                var shift = new ShiftAssignment
+                {
+                    Id = Guid.NewGuid(),
+                    StartTime = new DateTime(2025, 7, day, 6, 25, 0),
+                    EndTime = new DateTime(2025, 7, day, 7, 25, 0),
+                    DriverId = exampleDriver.Id,
+                    TripRouteId = exampleRoute.Id,
+                    VehicleId = exampleVehicle.Id,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "import",
+                    TripRoute = exampleRoute,
+                    Vehicle = exampleVehicle,
+                    Driver = exampleDriver,
+                    Notes = "Mock - Excel'den alınacak"
+                };
+
+                _context.ShiftAssignments.Add(shift);
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "10 günlük shift başarıyla import edildi.";
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }

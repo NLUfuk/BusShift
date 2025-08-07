@@ -9,7 +9,7 @@ public class ApplicationDbContext : IdentityDbContext
     {
     }
 
-    //public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
+    public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
     public DbSet<BusStation> BusStations { get; set; } = null!;
     public DbSet<Driver> Drivers { get; set; } = null!;
     public DbSet<Passenger> Passengers { get; set; } = null!;
